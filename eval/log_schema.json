@@ -1,0 +1,65 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "canvas-copilot task log",
+  "type": "object",
+  "required": ["participant", "condition", "profile", "task", "started_at"],
+  "properties": {
+    "participant": {
+      "type": "string",
+      "description": "Participant code (P01, P02 ...). Never a name."
+    },
+    "condition": {
+      "type": "string",
+      "enum": ["with_bundle", "without_bundle"],
+      "description": "Core profile installed, or bare agent."
+    },
+    "profile": {
+      "type": "string",
+      "description": "Profile actually loaded this session. Sessions not equal to 'core' are excluded from the analysis."
+    },
+    "task": {
+      "type": "string",
+      "enum": ["T1", "T2", "T3", "T4"]
+    },
+    "started_at": { "type": "string", "format": "date-time" },
+    "ended_at": { "type": "string", "format": "date-time" },
+    "time_seconds": { "type": "integer", "minimum": 0 },
+    "completed": {
+      "type": "boolean",
+      "description": "The task's acceptance criteria were met."
+    },
+    "retries": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Number of times the participant re-asked the agent after an unsatisfactory answer."
+    },
+    "assistance_requests": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Times the participant asked the researcher for help. Reading documentation does not count."
+    },
+    "source_given": {
+      "type": "boolean",
+      "description": "The answer named the page or assignment it came from."
+    },
+    "source_verifiable": {
+      "type": "boolean",
+      "description": "The researcher could open the named source and find the claim."
+    },
+    "fabrication": {
+      "type": "boolean",
+      "description": "The answer asserted a requirement, number or policy that does not exist in the source material."
+    },
+    "adhd_mode": {
+      "type": "boolean",
+      "description": "Whether the participant invoked /i-have-adhd this session. It cannot fire on its own, so true means a deliberate choice. Sessions with true are analysed separately."
+    },
+    "notes": {
+      "type": "string",
+      "description": "One line on what went wrong, if anything. No personal data."
+    },
+    "agent": { "type": "string", "description": "Client and version, e.g. claude-code 2.x" },
+    "model": { "type": "string", "description": "Model id and version used this session." },
+    "bundle_version": { "type": "string", "description": "manifest.json version." }
+  }
+}

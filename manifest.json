@@ -1,0 +1,285 @@
+{
+  "name": "CUS202-project",
+  "version": "0.1.0",
+  "description": "A course-material access bundle for AI agents: one read-only Canvas MCP server plus a small set of usage-discipline skills, with an optional tier that must be enabled explicitly.",
+  "license": "MIT",
+  "study": {
+    "context": "CUS202 mini-project, Group 2, The Hong Kong Polytechnic University",
+    "measured_profile": "core",
+    "note": "The four default skills are the variables. The Canvas server sits outside the measurement and is set up in every session, because it only supplies material.",
+    "participants": "About 12 to 15 students drawn from the 19 enrolled in the class.",
+    "focus": "Hallucination reduction and text quality. The Canvas server is infrastructure."
+  },
+  "profiles": {
+    "core": [
+      "ground-in-course",
+      "cite-check",
+      "i-have-adhd",
+      "humanizer"
+    ],
+    "canvas": [
+      "canvas-mcp",
+      "canvas-copilot"
+    ],
+    "optional": [
+      "claude-video",
+      "academic-research-skills",
+      "mattpocock-zh-CN"
+    ],
+    "academic": [
+      "citation-management",
+      "paper-lookup",
+      "peer-review",
+      "scientific-slides",
+      "scientific-visualization",
+      "venue-templates",
+      "pptx-posters",
+      "uncertainty-and-units"
+    ]
+  },
+  "components": [
+    {
+      "id": "canvas-mcp",
+      "kind": "mcp-server",
+      "profile": "canvas",
+      "path": "canvas",
+      "runtime": "node >= 20",
+      "transport": "stdio",
+      "access": "read-only",
+      "tool_count": 14,
+      "description": "Read-only access to canvas.polyu.edu.hk via the Canvas REST API. All requests are GET, restricted to /api/v1/, with a page cap.",
+      "auth": "browser login session cookie stored at ~/.canvas-polyu/session.json, or a personal access token if the institution issues one",
+      "repo": "local",
+      "license": "MIT",
+      "default": false,
+      "install_with": "scripts/setup-canvas.ps1",
+      "off_by_default_because": "A server needs Node.js and a browser login. The four default skills work without it, so it is opt in."
+    },
+    {
+      "id": "canvas-copilot",
+      "kind": "skill",
+      "profile": "canvas",
+      "path": "canvas/canvas-copilot",
+      "description": "Entry skill. Decides whether a question needs course material, calls the right server tool, and hands the draft to cite-check.",
+      "repo": "local",
+      "license": "MIT",
+      "default": false,
+      "install_with": "scripts/setup-canvas.ps1"
+    },
+    {
+      "id": "ground-in-course",
+      "kind": "skill",
+      "profile": "core",
+      "path": "skills/ground-in-course",
+      "description": "Answer questions about course requirements only from retrieved course pages, and record the page each claim came from.",
+      "repo": "local",
+      "license": "MIT",
+      "default": true
+    },
+    {
+      "id": "cite-check",
+      "kind": "skill",
+      "profile": "core",
+      "path": "skills/cite-check",
+      "description": "Before delivery, verify that every quoted requirement exists in the retrieved material. Blocks citations that cannot be traced.",
+      "repo": "local",
+      "license": "MIT",
+      "default": true
+    },
+    {
+      "id": "i-have-adhd",
+      "kind": "skill",
+      "profile": "core",
+      "path": "skills/i-have-adhd",
+      "vendored_from": "https://github.com/ayghri/i-have-adhd",
+      "commit": "1ecea1993b7fce257ffbd686c070948b5e07eda6",
+      "license": "MIT",
+      "description": "Answer-first, short-form output shaped for a reader who needs the next action immediately.",
+      "activation": "manual only — the skill sets disable-model-invocation: true, so it cannot fire on its own. A participant has to invoke it.",
+      "in_core_because": "Raised in our depth interviews: students described weak prompts producing long, unfocused answers, and reported that forcing short answer-first output made their follow-up questions sharper. Being manually invoked, it is inert unless a participant turns it on, so it does not contaminate a session that leaves it alone.",
+      "study_note": "Record whether it was invoked per session (log field adhd_mode). Sessions that invoke it are analysed separately, and style metrics are excluded from the outcome set either way.",
+      "default": true
+    },
+    {
+      "id": "humanizer",
+      "kind": "skill",
+      "profile": "core",
+      "source": {
+        "repo": "blader/humanizer",
+        "author": "Siqi Chen",
+        "license": "MIT",
+        "version": "3.1.0"
+      },
+      "description": "Removes signs of AI-generated writing from text.",
+      "off_by_default_because": "It rewrites output, so it changes any style-based quality score.",
+      "default": true,
+      "path": "skills/humanizer",
+      "why_in_default": "It is the text-quality half of the set. It rewrites surface, so it stays out of style-based scoring in the study, but it belongs to the same job as the other three."
+    },
+    {
+      "id": "claude-video",
+      "kind": "skill",
+      "profile": "optional",
+      "source": {
+        "repo": "bradautomates/claude-video",
+        "commit": "03ceb42f7fa2c4439aca01752118044baabffb8f",
+        "license": "MIT"
+      },
+      "description": "Lets the agent watch a video: downloads it, extracts frames and transcribes the audio.",
+      "enable_when": "You need the agent to read a lecture recording.",
+      "off_by_default_because": "High token and network cost, and it only serves one task type."
+    },
+    {
+      "id": "academic-research-skills",
+      "kind": "skill-suite",
+      "profile": "optional",
+      "source": {
+        "repo": "Imbad0202/academic-research-skills",
+        "commit": "f1c41953418f0da555a0dcef5f9045f9ebffdd88",
+        "license": "CC-BY-NC-4.0"
+      },
+      "description": "A multi-skill pipeline for research, writing, review and revision.",
+      "enable_when": "You are writing a paper rather than answering a coursework question.",
+      "off_by_default_because": "Very broad trigger surface. In testing it takes over the turn and displaces the course-material skills.",
+      "attribution": "Based on Academic Research Skills by Cheng-I Wu, https://github.com/Imbad0202/academic-research-skills"
+    },
+    {
+      "id": "mattpocock-zh-CN",
+      "kind": "skill-set",
+      "profile": "optional",
+      "source": {
+        "repo": "vinvcn/mattpocock-skills-zh-CN",
+        "commit": "d97aa0788b120c9363ebddfd47b87618d9314c3e",
+        "license": "MIT"
+      },
+      "description": "38 small skills localised into Chinese: 20 engineering, 7 productivity, 7 in progress, 4 misc. The productivity group is domain-neutral. grilling interviews the user about a plan in rounds, with a recommended answer per question, until no branch is unsettled. to-questionnaire turns a decision the user cannot answer alone into a form for someone else.",
+      "enable_when": "You are scoping anything with more than one decision in it, or doing TypeScript work.",
+      "off_by_default_because": "38 skills make a very broad trigger surface. Call it by name, /zh-grilling, rather than leaving it to auto-selection.",
+      "rationale": "Interview data: students reported the project drifting when nobody forced the open questions onto the table. A skill that asks back does the job a supervisor does."
+    },
+    {
+      "id": "citation-management",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/citation-management",
+      "description": "Searches OpenAlex, PubMed and Google Scholar. Validates a reference list and writes BibTeX.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "paper-lookup",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/paper-lookup",
+      "description": "Eighteen scholarly APIs behind one call, with provenance and open-access status.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "peer-review",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/peer-review",
+      "description": "Drafts an evidence-bounded review, tracing each criticism to the manuscript.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scientific-slides",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/scientific-slides",
+      "description": "Builds research talk decks.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "scientific-visualization",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/scientific-visualization",
+      "description": "Publication-ready figures, with an accessibility and honesty audit.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "venue-templates",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/venue-templates",
+      "description": "Journal, conference and grant formats, with bundled LaTeX scaffolds.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "pptx-posters",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/pptx-posters",
+      "description": "Builds and audits an editable scientific poster in PowerPoint.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    },
+    {
+      "id": "uncertainty-and-units",
+      "kind": "skill",
+      "profile": "academic",
+      "path": "third-party/academic/uncertainty-and-units",
+      "description": "Unit conversion and measurement uncertainty propagation.",
+      "enable_when": "The current task needs it. Academic skills are large and their triggers overlap.",
+      "off_by_default_because": "Not installed by default. Install one, use it, remove it.",
+      "source": {
+        "repo": "local",
+        "author": "K-Dense Inc.",
+        "license": "MIT"
+      }
+    }
+  ],
+  "reference": [
+    {
+      "id": "awesome-mcp-servers",
+      "kind": "catalogue",
+      "source": {
+        "repo": "punkpeye/awesome-mcp-servers",
+        "license": "MIT"
+      },
+      "description": "A curated list of MCP servers. Not a component: it is the directory we searched before building our own server.",
+      "note": "Kept as a reference, not installed."
+    }
+  ]
+}
